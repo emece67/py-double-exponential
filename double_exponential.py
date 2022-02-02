@@ -1,13 +1,12 @@
-﻿# Copyright (c) 2021, emece67 - MIT License
+# Copyright (c) 2021, 2022, emece67 - MIT License
+#!/usr/bin/env python3
 
-
-from mpmath import isnan, isfinite, sign, almosteq, power, mp, sqrt, log, ln, pi, exp, isnormal
-
+import mpmath as mp
 
 def double_exponential(f, a, b):
   """
   Computes the integral of function `f` from `a` to `b`, using the double
-    exponential method. Accepts `+inf`/`-inf` as interval ends
+    exponential method. Accepts `+mp.inf`/`-mp.inf` as interval ends
   Returns a tuple with:
     * the computed integral;
     * an error estimation;
@@ -49,53 +48,53 @@ def double_exponential(f, a, b):
   bpa2z = False               # True if limits in {(+/-inf, 0), (0, +/-inf), (+/-inf, -/+inf)}
   chg = False                 # True if limits = (+/-inf, b)
 
-  if isnan(a) or isnan(b):
-    return (NaN, NaN, 0, 0, 0, [])
+  if mp.isnan(a) or mp.isnan(b):
+    return (mp.nan, mp.nan, 0, 0, 0, [])
 
   if a == b:
     return (0, 0, 0, 0, 0, [])
 
-  if isfinite(a) and isfinite(b):
+  if mp.isfinite(a) and mp.isfinite(b):
     # tanh-sinh case
-    bpa2 = (b + a)/2          # centre point
-    bma2 = (b - a)/2          # half interval
+    bpa2 = (b + a) / 2        # centre point
+    bma2 = (b - a) / 2        # half interval
     tanhsinh = True
-  elif isfinite(a) or isfinite(b):
+  elif mp.isfinite(a) or mp.isfinite(b):
     # exp-sinh case
-    chg = isfinite(b)
-    (bpa2, bma2) = (b, a) if chg else (a, b)
-    bma2 = sign(bma2)
-    bpa2z = almosteq(bpa2, 0.0)
+    chg = mp.isfinite(b)
+    bpa2, bma2 = (b, a) if chg else (a, b)
+    bma2 = mp.sign(bma2)
+    bpa2z = mp.almosteq(bpa2, 0.0)
     expsinh = True
   else:
     # sinh-sinh case
     bpa2 = 0
-    bma2 = sign(b)
+    bma2 = mp.sign(b)
     bpa2z = True
 
-  pi2 = pi()/2
-  pi4 = pi()/4
+  pi2 = mp.pi() / 2
+  pi4 = mp.pi() / 4
 
   # convergence threshold
-  eps = power(10, -mp.dps)
-  thr = 10*sqrt(eps)
+  eps = mp.power(10, -mp.mp.dps)
+  thr = 10 * mp.sqrt(eps)
   if bpa2z:
-    eps = power(10, -(mp.dps/2)**2)
+    eps = mp.power(10, -(mp.mp.dps / 2) ** 2)
   # maximum allowed level
-  levelmax = int(round(log(mp.dps, 2)) + 1)   # + 2) also acceptable
+  levelmax = int(round(mp.log(mp.mp.dps, 2)) + 1)   # + 2) also acceptable
 
   # maximum t
   if tanhsinh:
-    tmax = 2*min(1, abs(bma2))
+    tmax = 2 * min(1, abs(bma2))
   elif bpa2z:
-    tmax = sqrt(eps)
+    tmax = mp.sqrt(eps)
   else:
-    tmax = abs(1/bpa2/2)
-  tmax = ln(tmax/eps)
+    tmax = abs(1 / bpa2 / 2)
+  tmax = mp.ln(tmax / eps)
   if not tanhsinh:
     tmax *= 2
-##  tmax = ln(tmax/pi2)
-  exptmax = tmax/pi2
+##  tmax = mp.ln(tmax / pi2)
+  exptmax = tmax / pi2
 
   s = 0                       # s is the computed integral
   h = 2                       # rectangle width
@@ -104,43 +103,43 @@ def double_exponential(f, a, b):
   # progress thru levels
   for level in range(levelmax + 1):
     # sp = s at previous level
-    sp = s*bma2*pi2*h
+    sp = s * bma2 * pi2 * h
     if chg:
       sp = -sp
     if level:
       q_lvl.append(sp)
     wsl = 0                   # weigthed sum at this level
     h /= 2
-    expt = exp(h)             # exp(t)
-    exph = expt**2 if level else expt
+    expt = mp.exp(h)          # exp(t)
+    exph = expt ** 2 if level else expt
     # walk abscissas
     while True:
       # try to avoid the computation of too many exp functions...
-      iexpt = 1/expt
-      cht = (expt + iexpt)/2
-      # pi/2*sinh(t)
-      pi2sh = pi4*(expt - iexpt)
+      iexpt = 1 / expt
+      cht = (expt + iexpt) / 2
+      # pi / 2 * sinh(t)
+      pi2sh = pi4 * (expt - iexpt)
       # weight and abscissa
-      w = r = exp(pi2sh)
+      w = r = mp.exp(pi2sh)
       if not expsinh:
-        iexppi2sh = 1/r
+        iexppi2sh = 1 / r
         w += iexppi2sh        # 2cosh(pi2sh)
         r -= iexppi2sh        # 2sinh(pi2sh)
         r /= w if tanhsinh else 2
         w /= 2                # cosh(pi2sh)
       if tanhsinh:
-        w = 1/w**2
+        w = 1 / w ** 2
       try:
-        fpl = f(bpa2 + bma2*r)
+        fpl = f(bpa2 + bma2 * r)
       except ArithmeticError:
         fpl = 0
-      p = fpl*w if isnormal(fpl) else 0
+      p = fpl * w if mp.isnormal(fpl) else 0
       try:
-        fmi = f(bpa2 + bma2/r) if expsinh else f(bpa2 - bma2*r)
+        fmi = f(bpa2 + bma2 / r) if expsinh else f(bpa2 - bma2 * r)
       except ArithmeticError:
         fmi = 0
       tnfe += 2
-      p += (fmi/w if expsinh else fmi*w) if isnormal(fmi) else 0
+      p += (fmi / w if expsinh else fmi * w) if mp.isnormal(fmi) else 0
       p *= cht
       wsl += p
       # next exp(t)
@@ -149,7 +148,7 @@ def double_exponential(f, a, b):
       if expt > exptmax:
         break
       # early test (mainly for the sinh-sinh case)
-      if abs(p) <= abs(eps*wsl):
+      if abs(p) <= abs(eps * wsl):
         break
     # end of abscissa loop
 
@@ -163,19 +162,19 @@ def double_exponential(f, a, b):
       tnfe += 1
 
     # converged?
-    if not s or (abs(2*abs(wsl) - abs(s)) < abs(thr*s)):
+    if not s or (abs(2 * abs(wsl) - abs(s)) < abs(thr * s)):
       break
   # end of level loop
 
   # iteration done, apply constant coefficients
-  s *= bma2*pi2*h
+  s *= bma2 * pi2 * h
   if chg:
     s = -s
   q_lvl.append(s)
 
   # check for bad results
   err = abs(sp - s)
-  if 10*err >= abs(s):
+  if 10 * err >= abs(s):
     err = abs(err) + abs(s)
     s = 0
 
@@ -184,6 +183,40 @@ def double_exponential(f, a, b):
   return (s, err, tnfe, level, variant, q_lvl)
 
 
-def main():
-  if __name__ == '__main__':
-    pass
+if __name__ == '__main__':
+  import argparse
+  from sys import exit
+
+  parser = argparse.ArgumentParser(
+    description = 'Numerically evaluates a definite integral using the double-exponential method (aka the tanh-sinh quadrature).',
+    epilog = 'Returns the computed integral, the estimated error of the quadrature, the Total Number of Function Evaluations (TNFE) needed during the calculation and the used variant of the method. When specifying the arguments, it can be assumed that package mpmath is imported as mp. Use "--" after that last option and before any argument that starts with "-".')
+  parser.add_argument('f',
+    help = 'function to be integrated, may be a " quoted string with a lambda expression, e.g.: "lambda x: 2/(1 + x**2)"')
+  parser.add_argument('a',
+    help = 'left extreme of the integration interval (accepts infinities as "±mp.inf")')
+  parser.add_argument('b',
+    help = 'right extreme of the integration interval (accepts infinities as "±mp.inf")')
+  parser.add_argument('-b', '--bits',
+    help = 'number of bits used during calculations (sets mpmath.prec)')
+  parser.add_argument('-d', '--digits',
+    help = 'number of decimal digits used during calculations (sets mpmath.dps)')
+  args = parser.parse_args()
+
+  if args.bits != None and args.digits != None:
+    parser.print_usage()
+    print('%s: error: cannot specify both -b and -d options simulaneously' % parser.prog)
+    exit()
+
+  if args.bits != None:
+    mp.mp.prec = args.bits
+
+  if args.digits != None:
+    mp.mp.dps = args.digits
+
+  s, err, tnfe, level, variant, q_lvl = double_exponential(
+    f = eval(args.f),
+    a = eval(args.a),
+    b = eval(args.b))
+
+  print('I = %s ± %s\n' % (s, err))
+  print('TNFE = %i (%s)\n' % (tnfe, ('tanh-sinh', 'exp-sinh', 'sinh-sinh')[variant]))
