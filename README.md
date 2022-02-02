@@ -30,7 +30,7 @@ and options:
 
 At end it will return the computed integral, the estimated error of the quadrature, the Total Number of Function Evaluations (TNFE)
 needed during the calculation and the used variant of the method. When specifying the arguments, it can be assumed
-that package `mpmath` is imported as `mp`. Use "`--`" after that last option and before any argument that starts with a "`-`". Thus:
+that package `mpmath` is imported as `mp`. Use "`--`" (once) after that last option and before any argument that starts with a "`-`". Thus:
 ```
   double_exponential.py -d 32 -- "lambda x: 2/(1 + x**2)" -mp.inf 0
 ```
