@@ -41,3 +41,5 @@ I = 3.1415926535897932384626433832795 ± 9.1769596347412488797710510388239e-16
 TNFE = 95 (exp-sinh)
 ```
 Note that, in this case, all 32 digits of the result are correct.
+
+Enjoy!
