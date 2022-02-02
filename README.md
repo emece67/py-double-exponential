@@ -11,7 +11,7 @@ Uses `mpmath` and the only adjustable parameter is the number of bits or decimal
 
 This algorithm accepts `±mp.inf` as integration limits.
 
-## Using double_exponential.py from the command line
+## Using `double_exponential.py` from the command line
 `double_exponential.py` can be invoked from the command line. Its usage is:
 
 ```
